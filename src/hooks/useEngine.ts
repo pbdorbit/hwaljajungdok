@@ -11,7 +11,7 @@ const COUNTDOWN_SECONDS = 30;
 
 const useEngine = (sentence?: string) => {
   const [state, setState] = useState<State>("start");
-  const { words, updateWords } = useWords(sentence);
+  const { words, updateWords } = useWords();
   const { timeLeft, startCountdown, resetCountdown } =
     useCountdown(COUNTDOWN_SECONDS);
   const { typed, cursor, clearTyped, resetTotalTyped, totalTyped, inputRef } =
@@ -64,7 +64,7 @@ const useEngine = (sentence?: string) => {
     resetTotalTyped();
     setState("start");
     setErrors(0);
-    updateWords(sentence); //  변경 (재시작 시 같은 문장 유지)
+    updateWords(); //  변경 (재시작 시 같은 문장 유지)
     clearTyped();
   }, [clearTyped, updateWords, resetCountdown, resetTotalTyped, sentence]);
 

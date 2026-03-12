@@ -87,3 +87,23 @@ flowchart TD
     I --> J[nginx 설치 및 설정<br/>빌드 파일 → /var/www/html]
     J --> K([배포 완료 <br/>http://EC2-IP 접속 가능])
 ```
+
+## (임시) 시스템 아키텍처
+
+```mermaid
+graph TD
+    User([사용자 브라우저])
+
+    subgraph Netlify["Netlify (CDN)"]
+        Build["React 빌드 파일<br/>정적 파일 서빙 (HTTPS)"]
+    end
+
+    subgraph Client["클라이언트 (브라우저)"]
+        React["React + TypeScript<br/>타자 연습 · WPM · 정확도 측정"]
+        Dummy["DummySentences.ts<br/>랜덤 문장 제공"]
+    end
+
+    User -->|HTTPS 접속| Netlify
+    Netlify -->|정적 파일 전달| React
+    Dummy -->|랜덤 문장 주입| React
+```

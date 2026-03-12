@@ -1,12 +1,13 @@
 import { useCallback, useState } from "react";
+import { getRandomSentence } from "../data/Dummysentences";
 
-const DEFAULT = "저장한 문장으로 타자 연습을 시작해보세요";
+const useWords = () => {
+  const [words, setWords] = useState<string>(
+    () => getRandomSentence().text, // 초기값도 랜덤 문장
+  );
 
-const useWords = (sentence: string = DEFAULT) => {
-  const [words, setWords] = useState<string>(sentence);
-
-  const updateWords = useCallback((newSentence: string = DEFAULT) => {
-    setWords(newSentence);
+  const updateWords = useCallback(() => {
+    setWords(getRandomSentence().text); // 재시작 시 새 랜덤 문장
   }, []);
 
   return { words, updateWords };
