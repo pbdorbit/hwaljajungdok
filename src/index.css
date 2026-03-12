@@ -1,10 +1,14 @@
+/* 폰트 */
+
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500&display=swap");
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   body {
-    @apply min-h-screen bg-slate-800 grid place-items-center font-mono
-    tracking-wider;
+    @apply grid min-h-screen tracking-wider bg-slate-800 place-items-center;
+    font-family: "Noto Sans KR", monospace;
   }
 }

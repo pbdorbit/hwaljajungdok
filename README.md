@@ -1,46 +1,89 @@
-# Getting Started with Create React App
+# React + Node.js
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+(1) 서버 실행
 
-## Available Scripts
+```bash
+cd /server
+node index.js //port:4000
+```
 
-In the project directory, you can run:
+(2) 클라이언트 실행
 
-### `npm start`
+```bash
+cd /client
+npm run start
+```
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+# 다이어그램들
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+## 시스템 아키텍처
 
-### `npm test`
+인프라 전체 구조 : `AWS`, `EC2`, `nginx`, `PM2`
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+```mermaid
+graph TD
+    User([사용자 브라우저])
 
-### `npm run build`
+    subgraph AWS["AWS Cloud"]
+        subgraph VPC["Default VPC"]
+            subgraph EC2["EC2 t3.micro — Ubuntu 22.04"]
+                nginx["nginx<br/>port 80<br/>React 정적 파일 서빙"]
+                node["Node.js + Socket.io<br/>port 4000<br/>PM2로 프로세스 관리"]
+                build["/var/www/html<br/>React Build 파일"]
+            end
+        end
+        SG["보안그룹<br/>HTTP 80 · TCP 4000 · SSH 22"]
+    end
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+    User -->|"HTTP 요청 :80"| nginx
+    nginx --> build
+    User -->|"WebSocket :4000"| node
+    SG -.->|인바운드 규칙 적용| EC2
+```
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+## 시퀀스 다이어그램
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+실시간 채팅 흐름: `WebSocket`, `Socket.io`, `실시간 통신`
 
-### `npm run eject`
+```mermaid
+sequenceDiagram
+    actor A as 유저 A
+    actor B as 유저 B
+    participant nginx as nginx (port 80)
+    participant server as Node.js Server (port 4000)
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+    A->>nginx: HTTP GET / (페이지 요청)
+    nginx-->>A: React 빌드 파일 응답
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+    A->>server: WebSocket 연결 요청
+    server-->>A: 연결 수립 (connection)
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+    A->>server: emit join (name, room)
+    server-->>A: emit message (입장 환영)
+    server-->>B: emit roomData (유저 목록 갱신)
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+    A->>server: emit sendMessage
+    server-->>A: emit message (브로드캐스트)
+    server-->>B: emit message (브로드캐스트)
 
-## Learn More
+    A->>server: disconnect
+    server-->>B: emit message (퇴장 알림)
+```
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+## 배포 플로우차트
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+배포 과정 전체: `CI/CD 없는 수동 배포`
+
+```mermaid
+flowchart TD
+    A([로컬 개발 완료]) --> B[EC2 인스턴스 생성<br/>t2.micro · Ubuntu 22.04]
+    B --> C[보안그룹 설정<br/>80 · 4000 · 22 포트 오픈]
+    C --> D[SSH 접속<br/>ssh -i key.pem ubuntu@IP]
+    D --> E[Node.js 20 설치<br/>nvm or nodesource]
+    E --> F[git clone<br/>github 레포 클론]
+    F --> G[서버 의존성 설치<br/>cd server && npm install]
+    G --> H[PM2로 서버 실행<br/>pm2 start index.js]
+    H --> I[클라이언트 빌드<br/>cd client && npm run build]
+    I --> J[nginx 설치 및 설정<br/>빌드 파일 → /var/www/html]
+    J --> K([배포 완료 <br/>http://EC2-IP 접속 가능])
+```

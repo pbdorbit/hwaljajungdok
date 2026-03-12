@@ -1,16 +1,13 @@
-import { faker } from "@faker-js/faker";
 import { useCallback, useState } from "react";
 
-const generateWords = (count: number) => {
-  return faker.random.words(count).toLowerCase();
-};
+const DEFAULT = "저장한 문장으로 타자 연습을 시작해보세요";
 
-const useWords = (count: number) => {
-  const [words, setWords] = useState<string>(generateWords(count));
+const useWords = (sentence: string = DEFAULT) => {
+  const [words, setWords] = useState<string>(sentence);
 
-  const updateWords = useCallback(() => {
-    setWords(generateWords(count));
-  }, [count]);
+  const updateWords = useCallback((newSentence: string = DEFAULT) => {
+    setWords(newSentence);
+  }, []);
 
   return { words, updateWords };
 };
